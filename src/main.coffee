@@ -24,14 +24,15 @@ class Character extends Fathom.Entity
     Fathom.BasicHooks.rpgLike(5, this)()
 
     @x += @vx
-    #if entities.any ["wall", ((other) => @touchingRect other)]
-    #  @x -= @vx
-    #  @vx = 0
+
+    if entities.any ["wall", ((other) => other.collides(this))]
+      @x -= @vx
+      @vx = 0
 
     @y += @vy
-    #if entities.any ["wall", ((other) => @touchingRect other)]
-    #  @y -= @vy
-    #  @vy = 0
+    if entities.any ["wall", ((other) => other.collides(this))]
+      @y -= @vy
+      @vy = 0
 
   depth : -> 1
 
@@ -43,7 +44,7 @@ map = new Fathom.Map(10, 10, 20)
 
 for x in [0...10]
   for y in [0...10]
-    map.setTile(x, y, 0)
+    map.setTile(x, y, if x == 8 then 1 else 0)
 
 all_entities.add character
 all_entities.add map
