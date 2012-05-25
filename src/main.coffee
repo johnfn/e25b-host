@@ -1,3 +1,5 @@
+{$, $number, $function, $string, $object, types} = (if typeof window == 'undefined' then (require "./types").Types else this.Types)
+
 SIZE = 20 #size of a tile.
 SCREEN_WIDTH  = 500
 SCREEN_HEIGHT = 500
@@ -21,9 +23,9 @@ class Character extends Fathom.Entity
     @direction = new Fathom.Vector(1, 0)
     @on "pre-update", Fathom.BasicHooks.rpgLike(5, this)
     @on "post-update", Fathom.BasicHooks.decel this
-    @on "post-update", Fathom.BasicHooks.leaveScreen(this, MAP_WIDTH, MAP_HEIGHT, @leaveScreen)
+    @on "post-update", Fathom.BasicHooks.onLeaveScreen(this, MAP_WIDTH, MAP_HEIGHT, @onLeaveScreen)
 
-  leaveScreen: ->
+  onLeaveScreen: ->
     dx = Math.floor(@x / MAP_WIDTH)
     dy = Math.floor(@y / MAP_WIDTH)
 
@@ -63,6 +65,26 @@ class Character extends Fathom.Entity
 
   depth : -> 1
 
+class Enemy extends Fathom.Entity
+  constructor: (@x, @y, entities) ->
+    @health = 5
+    super x, y, 20
+
+  depth: -> 5
+
+  hurt: (dmg) ->
+    @health -= dmg
+    if @health < 0
+      @die()
+
+  groups: -> ["renderable", "updateable", "enemy"]
+
+  update: (entities) ->
+
+  render: (context) ->
+    context.fillStyle = "#fff"
+    context.fillRect @x, @y, @size, @size
+
 class Bullet extends Fathom.Entity
   constructor: (@x, @y, direction, entities) ->
     types $number, $number, $("Vector"), $("Entities")
@@ -71,9 +93,10 @@ class Bullet extends Fathom.Entity
     @speed = 10
     @direction = direction.normalize().multiply(@speed)
 
-    @on "pre-update", Fathom.BasicHooks.moveForward(this, @direction)
-    @on "post-update", Fathom.BasicHooks.dieAtWall(this, entities)
-    @on "post-update", Fathom.BasicHooks.dieOffScreen(this, SCREEN_WIDTH, SCREEN_HEIGHT, entities)
+    @on "pre-update", Fathom.BasicHooks.move(@, @direction)
+    @on "post-update", Fathom.BasicHooks.onCollide @, entities, "wall", => @die()
+    @on "post-update", Fathom.BasicHooks.onCollide @, entities, "enemy", (e) => e.hurt(1); @die()
+    @on "post-update", Fathom.BasicHooks.onLeaveScreen @, SCREEN_WIDTH, SCREEN_HEIGHT, => @die()
 
   groups: -> ["renderable", "updateable", "bullet"]
 
@@ -82,13 +105,17 @@ class Bullet extends Fathom.Entity
 
   depth: -> 5
 
+  collides: -> false
+
   render: (context) ->
     context.fillStyle = "#222"
     context.fillRect @x, @y, @size, @size
 
 character = new Character(20, 20)
+enemy = new Enemy(80, 80)
 
 all_entities.add character
+all_entities.add enemy
 all_entities.add map
 
 loadedMap = false
@@ -101,4 +128,4 @@ gameLoop = (context) ->
   all_entities.update all_entities
   all_entities.render context
 
-Fathom.initialize gameLoop, "main"
+Fathom.initialize gameLoop, all_entities, "main"
