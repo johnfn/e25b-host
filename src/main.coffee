@@ -9,7 +9,6 @@ MAP_HEIGHT = SIZE * 20
 Key = Fathom.Key
 U = Fathom.Util
 
-all_entities = new Fathom.Entities
 map = new Fathom.Map(20, 20, 20)
 
 class Character extends Fathom.Entity
@@ -41,32 +40,30 @@ class Character extends Fathom.Entity
     context.fillStyle = "#0f0"
     context.fillRect @x, @y, @size, @size
 
-  shoot: (entities) ->
-    types $("Entities")
-    entities.add(new Bullet(@x, @y, @direction, all_entities))
+  shoot: () ->
+    new Bullet(@x, @y, @direction)
 
-  update: (entities) ->
-    types $("Entities")
-
+  update: () ->
     if U.movementVector().nonzero()
       @direction = U.movementVector()
 
-    @shoot(entities) if Key.isDown(Key.X)
+    @shoot() if Key.isDown(Key.X)
 
     @x += @vx
-    if entities.any [(other) => other.collides(this)]
+    #TODO.
+    if @__fathom.entities.any [(other) => other.collides(this)]
       @x -= @vx
       @vx = 0
 
     @y += @vy
-    if entities.any [(other) => other.collides(this)]
+    if @__fathom.entities.any [(other) => other.collides(this)]
       @y -= @vy
       @vy = 0
 
   depth : -> 1
 
 class Enemy extends Fathom.Entity
-  constructor: (@x, @y, entities) ->
+  constructor: (@x, @y) ->
     @health = 5
     super x, y, 20
 
@@ -79,29 +76,28 @@ class Enemy extends Fathom.Entity
 
   groups: -> ["renderable", "updateable", "enemy"]
 
-  update: (entities) ->
+  update: () ->
 
   render: (context) ->
     context.fillStyle = "#fff"
     context.fillRect @x, @y, @size, @size
 
 class Bullet extends Fathom.Entity
-  constructor: (@x, @y, direction, entities) ->
-    types $number, $number, $("Vector"), $("Entities")
+  constructor: (@x, @y, direction) ->
+    types $number, $number, $("Vector")
     super x, y, 10
 
     @speed = 10
     @direction = direction.normalize().multiply(@speed)
 
     @on "pre-update", Fathom.BasicHooks.move(@, @direction)
-    @on "post-update", Fathom.BasicHooks.onCollide @, entities, "wall", => @die()
-    @on "post-update", Fathom.BasicHooks.onCollide @, entities, "enemy", (e) => e.hurt(1); @die()
+    @on "post-update", Fathom.BasicHooks.onCollide @, "wall", => @die()
+    @on "post-update", Fathom.BasicHooks.onCollide @, "enemy", (e) => e.hurt(1); @die()
     @on "post-update", Fathom.BasicHooks.onLeaveScreen @, SCREEN_WIDTH, SCREEN_HEIGHT, => @die()
 
   groups: -> ["renderable", "updateable", "bullet"]
 
-  update: (entities) ->
-    types $("Entities")
+  update: () ->
 
   depth: -> 5
 
@@ -114,10 +110,6 @@ class Bullet extends Fathom.Entity
 character = new Character(20, 20)
 enemy = new Enemy(80, 80)
 
-all_entities.add character
-all_entities.add enemy
-all_entities.add map
-
 loadedMap = false
 
 gameLoop = (context) ->
@@ -125,7 +117,4 @@ gameLoop = (context) ->
     map.fromImage("static/map.png", new Fathom.Vector(0, 0), -> )
     loadedMap = true
 
-  all_entities.update all_entities
-  all_entities.render context
-
-Fathom.initialize gameLoop, all_entities, "main"
+Fathom.initialize gameLoop, "main"
