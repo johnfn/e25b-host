@@ -5,6 +5,7 @@ SCREEN_WIDTH  = 500
 SCREEN_HEIGHT = 500
 MAP_WIDTH  = SIZE * 20
 MAP_HEIGHT = SIZE * 20
+SCREEN = new Fathom.Rect(0, 0, MAP_WIDTH)
 
 Key = Fathom.Key
 U = Fathom.Util
@@ -34,7 +35,7 @@ class Character extends Fathom.Entity
     map.setCorner(new Fathom.Vector(dx, dy))
 
   groups: ->
-    ["renderable", "updateable"]
+    ["renderable", "updateable", "character"]
 
   render: (context) ->
     context.fillStyle = "#0f0"
@@ -46,24 +47,14 @@ class Character extends Fathom.Entity
   update: () ->
     if U.movementVector().nonzero()
       @direction = U.movementVector()
-
     @shoot() if Key.isDown(Key.X)
-
-    @x += @vx
-    #TODO.
-    if @__fathom.entities.any [(other) => other.collides(this)]
-      @x -= @vx
-      @vx = 0
-
-    @y += @vy
-    if @__fathom.entities.any [(other) => other.collides(this)]
-      @y -= @vy
-      @vy = 0
 
   depth : -> 1
 
 class Enemy extends Fathom.Entity
   constructor: (@x, @y) ->
+    @destination = new Fathom.Point(@x, @y)
+
     @health = 5
     super x, y, 20
 
@@ -77,9 +68,13 @@ class Enemy extends Fathom.Entity
   groups: -> ["renderable", "updateable", "enemy"]
 
   update: () ->
+    if @close(@destination) or (@entities().one "map").collides(@destination.toRect(20)) or (not SCREEN.touchingPoint @destination)
+      @destination = new Fathom.Point(@x, @y) #@point()
+      @destination.add((new Fathom.Vector()).randomize().multiply(20))
+    @add(@destination.subtract(@).normalize())
 
   render: (context) ->
-    context.fillStyle = "#fff"
+    context.fillStyle = "#fff "
     context.fillRect @x, @y, @size, @size
 
 class Bullet extends Fathom.Entity
@@ -107,10 +102,18 @@ class Bullet extends Fathom.Entity
     context.fillStyle = "#222"
     context.fillRect @x, @y, @size, @size
 
+class FPSText extends Fathom.Text
+  update: () ->
+    @text = Fathom.getFPS().toString().substring(0, 4)
+  depth: -> 12
+  groups: -> ["renderable", "updateable"]
+
 character = new Character(20, 20)
 enemy = new Enemy(80, 80)
+fps = new FPSText(0, 0, "")
 
 loadedMap = false
+
 
 gameLoop = (context) ->
   if not loadedMap
