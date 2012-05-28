@@ -17,19 +17,21 @@ class Character extends Fathom.Entity
 
     @vx = @vy = 0
     @speed = 4
-
+    @items = []
     @direction = new Fathom.Vector(1, 0)
-    @on "pre-update", Fathom.BasicHooks.rpgLike(5, this)
-    @on "pre-update", Fathom.BasicHooks.decel this
+
+    @on "pre-update", Fathom.BasicHooks.decel()
+    @on "pre-update", Fathom.BasicHooks.rpgLike(5)
 
     @on "pre-update", Fathom.BasicHooks.onLeaveMap(this, map, @onLeaveScreen)
     @on "pre-update", Fathom.BasicHooks.onCollide @, "item", @pickupItem
 
-    @on "post-update", Fathom.BasicHooks.resolveCollisions @
+    @on "post-update", Fathom.BasicHooks.resolveCollisions
 
   pickupItem: (item) ->
+    @items.push(new InventoryItem(item))
     item.die()
-    console.log "item get!"
+    console.log @items
 
   onLeaveScreen: ->
     dx = Math.floor(@x / map.width)
@@ -55,8 +57,14 @@ class Character extends Fathom.Entity
 
   depth : -> 1
 
-class Item extends Fathom.Entity
-  constructor: (@x, @y) -> super x, y, 20, 20, "#0aa"
+class InventoryItem
+  constructor: (groundItem) ->
+    @type = groundItem.type
+
+class GroundItem extends Fathom.Entity
+  constructor: (@x, @y) ->
+    @type = U.randElem ["cool", "stuff", "bro"]
+    super x, y, 20, 20, "#0aa"
   depth: -> 15
   groups: -> ["renderable", "updateable", "item"]
 
@@ -120,8 +128,8 @@ enemy = new Enemy(80, 80)
 fps = new FPSText("")
 bar = new Fathom.FollowBar character, 50, 50
 cam = new Fathom.FollowCam(character, -40, -40, MAP_WIDTH, MAP_HEIGHT)
-i1 = new Item(120, 120)
-i2 = new Item(80, 120)
+i1 = new GroundItem(120, 120)
+i2 = new GroundItem(80, 120)
 
 gameLoop = (context) ->
 
