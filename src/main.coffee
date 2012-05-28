@@ -13,7 +13,7 @@ U = Fathom.Util
 class Character extends Fathom.Entity
   constructor: (x, y, map) ->
     types Number, Number, Fathom.Map
-    super x, y, SIZE
+    super x, y, SIZE, SIZE, "#0f0"
 
     @vx = @vy = 0
     @speed = 4
@@ -45,10 +45,6 @@ class Character extends Fathom.Entity
   groups: ->
     ["renderable", "updateable", "character"]
 
-  render: (context) ->
-    context.fillStyle = "#0f0"
-    context.fillRect @x, @y, @width, @height
-
   shoot: () ->
     new Bullet(@x, @y, @direction)
 
@@ -69,7 +65,7 @@ class Enemy extends Fathom.Entity
     @destination = new Fathom.Point(@x, @y)
 
     @health = 5
-    super x, y, 20
+    super x, y, 20, 20, "#000"
 
   depth: -> 5
 
@@ -85,10 +81,6 @@ class Enemy extends Fathom.Entity
       @destination = new Fathom.Point(@x, @y) #@point()
       @destination.add((new Fathom.Vector()).randomize().multiply(20))
     @add(@destination.subtract(@).normalize())
-
-  render: (context) ->
-    context.fillStyle = "#fff "
-    context.fillRect @x, @y, @width, @height
 
 class Bullet extends Fathom.Entity
   constructor: (@x, @y, direction) ->
