@@ -24,9 +24,9 @@ class Character extends Fathom.Entity
     @on "pre-update", Fathom.BasicHooks.rpgLike(5)
 
     @on "pre-update", Fathom.BasicHooks.onLeaveMap(this, map, @onLeaveScreen)
-    @on "pre-update", Fathom.BasicHooks.onCollide @, "item", @pickupItem
+    @on "pre-update", Fathom.BasicHooks.onCollide "item", @pickupItem
 
-    @on "post-update", Fathom.BasicHooks.resolveCollisions
+    @on "post-update", Fathom.BasicHooks.resolveCollisions()
 
   pickupItem: (item) ->
     @items.push(new InventoryItem(item))
@@ -98,9 +98,9 @@ class Bullet extends Fathom.Entity
     @speed = 10
     @direction = direction.normalize().multiply(@speed)
 
-    @on "pre-update", Fathom.BasicHooks.move(@, @direction)
-    @on "post-update", Fathom.BasicHooks.onCollide @, "wall", => @die()
-    @on "post-update", Fathom.BasicHooks.onCollide @, "enemy", (e) => e.hurt(1); @die()
+    @on "pre-update", Fathom.BasicHooks.move(@direction)
+    @on "post-update", Fathom.BasicHooks.onCollide "wall", => @die()
+    @on "post-update", Fathom.BasicHooks.onCollide "enemy", (e) => e.hurt(1); @die()
     @on "post-update", Fathom.BasicHooks.onLeaveMap(this, map, @die)
 
   groups: -> ["renderable", "updateable", "bullet"]
