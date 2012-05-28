@@ -10,11 +10,9 @@ SCREEN = new Fathom.Rect(0, 0, MAP_WIDTH)
 Key = Fathom.Key
 U = Fathom.Util
 
-map = new Fathom.Map(20, 20, 20)
-
 class Character extends Fathom.Entity
-  constructor: (x, y) ->
-    types $number, $number
+  constructor: (x, y, map) ->
+    types Number, Number, Fathom.Map
     super x, y, SIZE
 
     @vx = @vy = 0
@@ -22,24 +20,34 @@ class Character extends Fathom.Entity
 
     @direction = new Fathom.Vector(1, 0)
     @on "pre-update", Fathom.BasicHooks.rpgLike(5, this)
-    @on "post-update", Fathom.BasicHooks.decel this
-    @on "post-update", Fathom.BasicHooks.onLeaveScreen(this, MAP_WIDTH, MAP_HEIGHT, @onLeaveScreen)
+    @on "pre-update", Fathom.BasicHooks.decel this
+
+    @on "pre-update", Fathom.BasicHooks.onLeaveMap(this, map, @onLeaveScreen)
+    @on "pre-update", Fathom.BasicHooks.onCollide @, "item", @pickupItem
+
+    @on "post-update", Fathom.BasicHooks.resolveCollisions @
+
+  pickupItem: (item) ->
+    item.die()
+    console.log "item get!"
 
   onLeaveScreen: ->
-    dx = Math.floor(@x / MAP_WIDTH)
-    dy = Math.floor(@y / MAP_WIDTH)
+    dx = Math.floor(@x / map.width)
+    dy = Math.floor(@y / map.height)
 
-    @x -= dx * MAP_WIDTH
-    @y -= dy * MAP_WIDTH
+    @x -= dx * map.width
+    @y -= dy * map.height
 
     map.setCorner(new Fathom.Vector(dx, dy))
+
+    cam.snap()
 
   groups: ->
     ["renderable", "updateable", "character"]
 
   render: (context) ->
     context.fillStyle = "#0f0"
-    context.fillRect @x, @y, @size, @size
+    context.fillRect @x, @y, @width, @height
 
   shoot: () ->
     new Bullet(@x, @y, @direction)
@@ -50,6 +58,11 @@ class Character extends Fathom.Entity
     @shoot() if Key.isDown(Key.X)
 
   depth : -> 1
+
+class Item extends Fathom.Entity
+  constructor: (@x, @y) -> super x, y, 20, 20, "#0aa"
+  depth: -> 15
+  groups: -> ["renderable", "updateable", "item"]
 
 class Enemy extends Fathom.Entity
   constructor: (@x, @y) ->
@@ -75,11 +88,11 @@ class Enemy extends Fathom.Entity
 
   render: (context) ->
     context.fillStyle = "#fff "
-    context.fillRect @x, @y, @size, @size
+    context.fillRect @x, @y, @width, @height
 
 class Bullet extends Fathom.Entity
   constructor: (@x, @y, direction) ->
-    types $number, $number, $("Vector")
+    types Number, Number, Fathom.Vector
     super x, y, 10
 
     @speed = 10
@@ -88,36 +101,36 @@ class Bullet extends Fathom.Entity
     @on "pre-update", Fathom.BasicHooks.move(@, @direction)
     @on "post-update", Fathom.BasicHooks.onCollide @, "wall", => @die()
     @on "post-update", Fathom.BasicHooks.onCollide @, "enemy", (e) => e.hurt(1); @die()
-    @on "post-update", Fathom.BasicHooks.onLeaveScreen @, SCREEN_WIDTH, SCREEN_HEIGHT, => @die()
+    @on "post-update", Fathom.BasicHooks.onLeaveMap(this, map, @die)
 
   groups: -> ["renderable", "updateable", "bullet"]
-
   update: () ->
-
   depth: -> 5
-
   collides: -> false
 
   render: (context) ->
     context.fillStyle = "#222"
-    context.fillRect @x, @y, @size, @size
+    context.fillRect @x, @y, @width, @height
 
 class FPSText extends Fathom.Text
-  update: () ->
-    @text = Fathom.getFPS().toString().substring(0, 4)
+  constructor: (args...) ->
+    super(args...)
+    @dontAdjust = true
+  update: () -> @text = Fathom.getFPS().toString().substring(0, 4)
   depth: -> 12
   groups: -> ["renderable", "updateable"]
 
-character = new Character(20, 20)
+map = new Fathom.Map(40, 40, 20)
+map.fromImage("static/map.png", new Fathom.Vector(0, 0), -> )
+
+character = new Character(40, 40, map)
 enemy = new Enemy(80, 80)
-fps = new FPSText(0, 0, "")
-
-loadedMap = false
-
+fps = new FPSText("")
+bar = new Fathom.FollowBar character, 50, 50
+cam = new Fathom.FollowCam(character, -40, -40, MAP_WIDTH, MAP_HEIGHT)
+i1 = new Item(120, 120)
+i2 = new Item(80, 120)
 
 gameLoop = (context) ->
-  if not loadedMap
-    map.fromImage("static/map.png", new Fathom.Vector(0, 0), -> )
-    loadedMap = true
 
 Fathom.initialize gameLoop, "main"
