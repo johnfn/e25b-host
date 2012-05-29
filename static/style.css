@@ -1,0 +1,45 @@
+#items {
+	background-color: #fff;
+	padding-left: 10px;
+	border-bottom: 1px solid #999;
+	font: 39px 'Droid Sans', helvetica, arial, sans-serif;
+	color: #5E6348;
+}
+
+#container-left {
+	min-height: 500px;
+	border: 1px solid #ccc;
+	position: relative;
+
+    background-image: url(texture.png);
+    background-repeat: repeat;
+}
+
+#desc {
+	padding: 5px 5px 5px 5px;
+	position: absolute;
+	border-top: 1px solid #999;
+	bottom: 0;
+	height: 100px;
+	width: 100%;
+	font: 13px 'Droid Sans', Arial;
+}
+
+li {
+	color: #999;
+	list-style-type: square;
+}
+
+li a {
+	color: #8EC63F;
+    -moz-transition: all 0.2s linear;
+    -webkit-transition: all 0.2s linear;
+    -o-transition: all 0.2s linear;
+    transition: all 0.2s linear;
+	text-decoration: none;
+	font: 13px 'Droid Sans', Arial;
+}
+
+a:hover {
+   color: #F2961F;
+}

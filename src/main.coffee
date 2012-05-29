@@ -1,5 +1,3 @@
-{$, $number, $function, $string, $object, types} = (if typeof window == 'undefined' then (require "./types").Types else this.Types)
-
 SIZE = 20 #size of a tile.
 SCREEN_WIDTH  = 500
 SCREEN_HEIGHT = 500
@@ -12,7 +10,6 @@ U = Fathom.Util
 
 class Character extends Fathom.Entity
   constructor: (x, y, map) ->
-    types Number, Number, Fathom.Map
     super x, y, SIZE, SIZE, "#0f0"
 
     @vx = @vy = 0
@@ -31,7 +28,7 @@ class Character extends Fathom.Entity
   pickupItem: (item) ->
     @items.push(new InventoryItem(item))
     item.die()
-    console.log @items
+    refreshItems()
 
   onLeaveScreen: ->
     dx = Math.floor(@x / map.width)
@@ -60,10 +57,18 @@ class Character extends Fathom.Entity
 class InventoryItem
   constructor: (groundItem) ->
     @type = groundItem.type
+    @longDesc = 'This is a sample description bla bla bla bla its quite a long Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod'
+
+  getDesc: () ->
+    @type
+
+  disp: () ->
+    "$(\"#desc\").html(\"#{@longDesc}\")"
 
 class GroundItem extends Fathom.Entity
   constructor: (@x, @y) ->
-    @type = U.randElem ["cool", "stuff", "bro"]
+    @type = U.randElem ["Cool", "Stuff", "Bro"]
+    @description = "This is a longer description. Go go go."
     super x, y, 20, 20, "#0aa"
   depth: -> 15
   groups: -> ["renderable", "updateable", "item"]
@@ -92,7 +97,6 @@ class Enemy extends Fathom.Entity
 
 class Bullet extends Fathom.Entity
   constructor: (@x, @y, direction) ->
-    types Number, Number, Fathom.Vector
     super x, y, 10
 
     @speed = 10
@@ -130,6 +134,10 @@ bar = new Fathom.FollowBar character, 50, 50
 cam = new Fathom.FollowCam(character, -40, -40, MAP_WIDTH, MAP_HEIGHT)
 i1 = new GroundItem(120, 120)
 i2 = new GroundItem(80, 120)
+
+refreshItems = () ->
+  console.log character.items[0].disp()
+  $("#stuffs").html("" + ("<li><a href='javascript:#{i.disp()}'>#{i.getDesc()}</a></li>" for i in character.items).join(""))
 
 gameLoop = (context) ->
 
