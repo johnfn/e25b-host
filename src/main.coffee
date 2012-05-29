@@ -68,19 +68,25 @@ class Character extends Fathom.Entity
 class InventoryItem
   constructor: (groundItem) ->
     @type = groundItem.type
-    @longDesc = groundItem.description
 
   getRepr: () ->
     if @type == "Plasmid"
-      "<li class='plasmid'><a href='javascript:#{@disp()}'>#{@getDesc()}</a><ul class='plasmid-append'></ul></li>"
+      "<li class='plasmid'><a href='javascript:#{@disp()}'>#{@getDesc()}</a><input type='button' value='Build!'></input><ul class='plasmid-append'></ul></li>"
     else
       "<li class='not-plasmid'><a href='javascript:#{@disp()}'>#{@getDesc()}</a></li>"
 
   getDesc: () ->
     @type
 
+  longDesc: () ->
+    switch @type
+      when "Plasmid"
+        "<div><b>Plasmid:</b></div>A circular string of DNA helpful for creating new molecules."
+      else
+        @type
+
   disp: () ->
-    "$(\"#desc\").html(\"#{@longDesc}\")"
+    "$(\"#desc\").html(\"#{@longDesc()}\")"
 
 class GroundItem extends Fathom.Entity
   constructor: (@x, @y, @type=U.randElem(["1", "2", "3"])) ->
