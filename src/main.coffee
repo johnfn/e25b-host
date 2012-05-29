@@ -8,6 +8,17 @@ SCREEN = new Fathom.Rect(0, 0, MAP_WIDTH)
 Key = Fathom.Key
 U = Fathom.Util
 
+refreshItems = () ->
+  console.log character.items[0].disp()
+  $("#item-list").html("" + (i.getRepr() for i in character.items).join(""))
+
+  dropEvent = (event, ui) ->
+    $(this).children("ul").append($(ui.draggable).css('left', '').css('top', ''))
+
+  $(".not-plasmid").draggable()
+  $(".plasmid").droppable(drop: dropEvent, hoverClass: "plasmid-hover")
+  $("#container-left").droppable(drop: dropEvent, hoverClass: "plasmid-hover")
+
 class Character extends Fathom.Entity
   constructor: (x, y, map) ->
     super x, y, SIZE, SIZE, "#0f0"
@@ -57,7 +68,13 @@ class Character extends Fathom.Entity
 class InventoryItem
   constructor: (groundItem) ->
     @type = groundItem.type
-    @longDesc = 'This is a sample description bla bla bla bla its quite a long Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod'
+    @longDesc = groundItem.description
+
+  getRepr: () ->
+    if @type == "Plasmid"
+      "<li class='plasmid'><a href='javascript:#{@disp()}'>#{@getDesc()}</a><ul class='plasmid-append'></ul></li>"
+    else
+      "<li class='not-plasmid'><a href='javascript:#{@disp()}'>#{@getDesc()}</a></li>"
 
   getDesc: () ->
     @type
@@ -66,8 +83,7 @@ class InventoryItem
     "$(\"#desc\").html(\"#{@longDesc}\")"
 
 class GroundItem extends Fathom.Entity
-  constructor: (@x, @y) ->
-    @type = U.randElem ["Cool", "Stuff", "Bro"]
+  constructor: (@x, @y, @type=U.randElem(["1", "2", "3"])) ->
     @description = "This is a longer description. Go go go."
     super x, y, 20, 20, "#0aa"
   depth: -> 15
@@ -134,10 +150,12 @@ bar = new Fathom.FollowBar character, 50, 50
 cam = new Fathom.FollowCam(character, -40, -40, MAP_WIDTH, MAP_HEIGHT)
 i1 = new GroundItem(120, 120)
 i2 = new GroundItem(80, 120)
+i2 = new GroundItem(100, 120)
+i2 = new GroundItem(100, 100)
 
-refreshItems = () ->
-  console.log character.items[0].disp()
-  $("#stuffs").html("" + ("<li><a href='javascript:#{i.disp()}'>#{i.getDesc()}</a></li>" for i in character.items).join(""))
+character.pickupItem(new GroundItem(0, 0, "Plasmid"))
+character.pickupItem(new GroundItem(0, 0, "Plasmid"))
+character.pickupItem(new GroundItem(0, 0, "Plasmid"))
 
 gameLoop = (context) ->
 

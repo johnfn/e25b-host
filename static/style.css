@@ -15,6 +15,11 @@
     background-repeat: repeat;
 }
 
+.plasmid-hover {
+	background: "#ccc";
+	border: 1px solid black;
+}
+
 #desc {
 	padding: 5px 5px 5px 5px;
 	position: absolute;
