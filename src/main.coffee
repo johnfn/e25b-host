@@ -23,6 +23,9 @@ refreshItems = () ->
   $(".plasmid").droppable(drop: dropEvent, hoverClass: "plasmid-hover")
   $("#container-left").droppable(drop: dropEvent, hoverClass: "plasmid-hover")
 
+  $(".use").click (e) ->
+    character.setWeapon $(this).parent().children("a").text()
+
   $(".build").click (e) ->
     # Grab plasmid names
     names = []
@@ -44,6 +47,7 @@ class Character extends Fathom.Entity
     @speed = 4
     @items = []
     @direction = new Fathom.Vector(1, 0)
+    @weapon = "normal weapon"
 
     @on "pre-update", Fathom.BasicHooks.decel()
     @on "pre-update", Fathom.BasicHooks.rpgLike(5)
@@ -52,6 +56,9 @@ class Character extends Fathom.Entity
     @on "pre-update", Fathom.BasicHooks.onCollide "item", @pickupItem
 
     @on "post-update", Fathom.BasicHooks.resolveCollisions()
+
+  setWeapon: (@weapon) ->
+    @gunColor = U.randElem(["#0ff","#0f0","#00f","#fff"])
 
   pickupItem: (item) ->
     @items.push(new InventoryItem(item))
@@ -84,7 +91,7 @@ class Character extends Fathom.Entity
 
   shoot: () ->
     if Fathom.Tick.ticks % 4 == 0
-      new Bullet(@x, @y, @direction)
+      b = new Bullet(@x, @y, @direction, @gunColor)
 
   update: () ->
     if U.movementVector().nonzero()
@@ -127,7 +134,7 @@ class InventoryItem
     "$(\"#desc\").html(\"#{@longDesc()}\")"
 
 class GroundItem extends Fathom.Entity
-  constructor: (@x, @y, @type=U.randElem(["1", "2", "3"], @weapon=false)) ->
+  constructor: (@x, @y, @type=U.randElem(["1", "2", "3"]), @weapon=false) ->
     @description = "This is a longer description. Go go go."
     @color = U.randElem(["#0ff","#0f0","#00f","#fff"])
     super x, y, 20, 20, "#0aa"
@@ -157,8 +164,8 @@ class Enemy extends Fathom.Entity
     @add(@destination.subtract(@).normalize())
 
 class Bullet extends Fathom.Entity
-  constructor: (@x, @y, direction) ->
-    super x, y, 10
+  constructor: (@x, @y, direction, @color="#000") ->
+    super x, y, 10, 10, @color
 
     @speed = 10
     @direction = direction.normalize().multiply(@speed)
@@ -172,10 +179,6 @@ class Bullet extends Fathom.Entity
   update: () ->
   depth: -> 5
   collides: -> false
-
-  render: (context) ->
-    context.fillStyle = "#222"
-    context.fillRect @x, @y, @width, @height
 
 class FPSText extends Fathom.Text
   constructor: (args...) ->
@@ -204,6 +207,7 @@ character.pickupItem(new GroundItem(0, 0, "Plasmid"))
 character.pickupItem(new GroundItem(0, 0, "Cloning site"))
 character.pickupItem(new GroundItem(0, 0, "Antibiotic resistance gene"))
 character.pickupItem(new GroundItem(0, 0, "E. Coli origin of replication"))
+character.pickupItem(new GroundItem(0, 0, "Weakness thing.", true))
 
 messages = ["Welcome to my cool e25b game!",
 "Press the arrow keys to move around.",
@@ -230,7 +234,7 @@ $ ->
 
 gameLoop = (context) ->
   # Show messages.
-
+  $("#weapon").html(character.weapon)
   if messages.length
     $("#message-content").html(messages[0])
     $("#message").show()

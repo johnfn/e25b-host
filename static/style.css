@@ -15,6 +15,7 @@
 	min-height: 500px;
 	border: 1px solid #ccc;
 	position: relative;
+	font: 13px 'Droid Sans', Arial;
 
     background-image: url(texture.png);
     background-repeat: repeat;
@@ -58,6 +59,8 @@
 	width: 100%;
 	font: 13px 'Droid Sans', Arial;
 }
+
+
 
 li {
 	color: #999;
