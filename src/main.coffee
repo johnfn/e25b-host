@@ -35,7 +35,6 @@ refreshItems = () ->
     if contents[0] in names and contents[1] in names and contents[2] in names
       for itemName in contents
         character.removeItem(itemName)
-      character.removeItem("Plasmid")
       $(this).parent().remove()
       character.pickupItem(new GroundItem(0, 0, "Weakness thing.", true))
 
@@ -64,6 +63,9 @@ class Character extends Fathom.Entity
     @items.push(new InventoryItem(item))
     item.die()
     refreshItems()
+
+  itemList: () ->
+    i.getDesc() for i in @items
 
   removeItem: (name) ->
     i = 0
@@ -113,6 +115,10 @@ class InventoryItem
       "<li class='plasmid'><a href='javascript:#{@disp()}'>#{@getDesc()}</a>
         <input class='build' id='#{@id}' type='button' value='Build!'></input>
         <ul class='plasmid-append'></ul></li>"
+    else if @type == "Plasmid with cDNA"
+      "<li class='plasmid'><a href='javascript:#{@disp()}'>#{@getDesc()}</a>
+        <input class='build' id='#{@id}' type='button' value='Build!'></input>
+        <ul class='plasmid-append'></ul></li>"
     else if @weapon
       "<li class='plasmid'><a href='javascript:#{@disp()}'>#{@getDesc()}</a>
         <input class='use' id='#{@id}' type='button' value='Use!'></input>
@@ -127,6 +133,10 @@ class InventoryItem
     switch @type
       when "Plasmid"
         "<div><b>Plasmid:</b></div>A circular string of DNA helpful for creating new molecules."
+      when "Plasmid with cDNA"
+        "<div><b>Plasmid with cDNA:</b></div>Similar to the Plasmid, this is a circular string of DNA helpful for creating new molecules. The crucial difference is that with the cDNA we can express eukaryotic genes."
+      when "Biolistic bullets"
+        "<div><b>Biolistic bullets:</b></div>These are pellets of metal, coated with the DNA you want to replicate. You can shoot them at plants: new plants will grow and take up the DNA that the bullets provide."
       else
         @type
 
@@ -147,6 +157,9 @@ class Enemy extends Fathom.Entity
 
     @health = 5
     super x, y, 20, 20, "#000"
+
+  describe: () ->
+
 
   depth: -> 5
 
@@ -196,25 +209,26 @@ enemy = new Enemy(80, 80)
 fps = new FPSText("")
 bar = new Fathom.FollowBar character, 50, 50
 cam = new Fathom.FollowCam(character, -40, -40, MAP_WIDTH, MAP_HEIGHT)
-i1 = new GroundItem(120, 120)
-i2 = new GroundItem(80, 120)
-i2 = new GroundItem(100, 120)
-i2 = new GroundItem(100, 100)
+new GroundItem(100, 80,  "Cloning site")
+new GroundItem(100, 120, "Antibiotic resistance gene")
+new GroundItem(100, 160, "E. Coli origin of replication")
 
 character.pickupItem(new GroundItem(0, 0, "Plasmid"))
-character.pickupItem(new GroundItem(0, 0, "Plasmid"))
-character.pickupItem(new GroundItem(0, 0, "Plasmid"))
-character.pickupItem(new GroundItem(0, 0, "Cloning site"))
-character.pickupItem(new GroundItem(0, 0, "Antibiotic resistance gene"))
-character.pickupItem(new GroundItem(0, 0, "E. Coli origin of replication"))
-character.pickupItem(new GroundItem(0, 0, "Weakness thing.", true))
+character.pickupItem(new GroundItem(0, 0, "Plasmid with cDNA"))
+character.pickupItem(new GroundItem(0, 0, "Biolistic bullets", true))
 
 messages = ["Welcome to my cool e25b game!",
 "Press the arrow keys to move around.",
 "The world is full of monsters that you can genetically engineer molecules to fight against!",
-"If you click on a monster, you can get some sense as to its weakness."
-"Pick up items and drag them onto plasmids on the right toolbar, and then click Build to make a molecule.",
-"Shoot the molecules you've made with X."]
+"You'll notice three items on the ground over there. Go pick them up."]
+
+seenmoremessages = false
+moremessages = ["Good! Now, on the right side, drag them all under the Plasmid.",
+"This represents actually inserting these items into the plasmid in real life.",
+"When you've done that, click Build."]
+
+evenmoremsgs = false
+evenmore = ["Nice!"]
 
 $ ->
   $("#main").click (e) ->
@@ -233,6 +247,20 @@ $ ->
   refreshItems()
 
 gameLoop = (context) ->
+  # Picked up stuff?
+
+  if not seenmoremessages
+    yep = true
+
+    contents = ["Cloning site", "Antibiotic resistance gene", "E. Coli origin of replication"]
+    for c in contents
+      if c not in character.itemList()
+        yep = false
+        break
+    if yep
+      seenmoremessages = true
+      messages = moremessages
+
   # Show messages.
   $("#weapon").html(character.weapon)
   if messages.length
