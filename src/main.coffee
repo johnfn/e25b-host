@@ -23,6 +23,19 @@ refreshItems = () ->
   $(".plasmid").droppable(drop: dropEvent, hoverClass: "plasmid-hover")
   $("#container-left").droppable(drop: dropEvent, hoverClass: "plasmid-hover")
 
+  $(".build").click (e) ->
+    # Grab plasmid names
+    names = []
+    $(this).parent().children("ul").children("li").children("a").each -> names.push($(this).text())
+
+    contents = ["Cloning site", "Antibiotic resistance gene", "E. Coli origin of replication"]
+    if contents[0] in names and contents[1] in names and contents[2] in names
+      for itemName in contents
+        character.removeItem(itemName)
+      character.removeItem("Plasmid")
+      $(this).parent().remove()
+      character.pickupItem(new GroundItem(0, 0, "Weakness thing.", true))
+
 class Character extends Fathom.Entity
   constructor: (x, y, map) ->
     super x, y, SIZE, SIZE, "#0f0"
@@ -44,6 +57,16 @@ class Character extends Fathom.Entity
     @items.push(new InventoryItem(item))
     item.die()
     refreshItems()
+
+  removeItem: (name) ->
+    i = 0
+
+    while i < @items.length
+      if @items[i].getDesc() == name
+        break
+      i++
+
+    @items.splice(i, 1)
 
   onLeaveScreen: ->
     dx = Math.floor(@x / map.width)
@@ -70,13 +93,23 @@ class Character extends Fathom.Entity
 
   depth : -> 1
 
+ids = 0
+
 class InventoryItem
   constructor: (groundItem) ->
     @type = groundItem.type
+    @weapon = groundItem.weapon
+    @id = ++ids
 
   getRepr: () ->
     if @type == "Plasmid"
-      "<li class='plasmid'><a href='javascript:#{@disp()}'>#{@getDesc()}</a><input type='button' value='Build!'></input><ul class='plasmid-append'></ul></li>"
+      "<li class='plasmid'><a href='javascript:#{@disp()}'>#{@getDesc()}</a>
+        <input class='build' id='#{@id}' type='button' value='Build!'></input>
+        <ul class='plasmid-append'></ul></li>"
+    else if @weapon
+      "<li class='plasmid'><a href='javascript:#{@disp()}'>#{@getDesc()}</a>
+        <input class='use' id='#{@id}' type='button' value='Use!'></input>
+        <ul class='plasmid-append'></ul></li>"
     else
       "<li class='not-plasmid'><a href='javascript:#{@disp()}'>#{@getDesc()}</a></li>"
 
@@ -94,7 +127,7 @@ class InventoryItem
     "$(\"#desc\").html(\"#{@longDesc()}\")"
 
 class GroundItem extends Fathom.Entity
-  constructor: (@x, @y, @type=U.randElem(["1", "2", "3"])) ->
+  constructor: (@x, @y, @type=U.randElem(["1", "2", "3"], @weapon=false)) ->
     @description = "This is a longer description. Go go go."
     @color = U.randElem(["#0ff","#0f0","#00f","#fff"])
     super x, y, 20, 20, "#0aa"
@@ -168,6 +201,9 @@ i2 = new GroundItem(100, 100)
 character.pickupItem(new GroundItem(0, 0, "Plasmid"))
 character.pickupItem(new GroundItem(0, 0, "Plasmid"))
 character.pickupItem(new GroundItem(0, 0, "Plasmid"))
+character.pickupItem(new GroundItem(0, 0, "Cloning site"))
+character.pickupItem(new GroundItem(0, 0, "Antibiotic resistance gene"))
+character.pickupItem(new GroundItem(0, 0, "E. Coli origin of replication"))
 
 messages = ["Welcome to my cool e25b game!",
 "Press the arrow keys to move around.",
@@ -177,8 +213,6 @@ messages = ["Welcome to my cool e25b game!",
 "Shoot the molecules you've made with X."]
 
 $ ->
-  refreshItems()
-
   $("#main").click (e) ->
     items = Fathom.mousePick(e.pageX, e.pageY)
     if items.length > 0
@@ -192,7 +226,11 @@ $ ->
   $("#hide-help").click (e) ->
     $("#help").toggle()
 
+  refreshItems()
+
 gameLoop = (context) ->
+  # Show messages.
+
   if messages.length
     $("#message-content").html(messages[0])
     $("#message").show()
