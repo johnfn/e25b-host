@@ -20,6 +20,11 @@
 	border: 1px solid black;
 }
 
+.not-plasmid-hover {
+	background: "#ccc";
+	border-bottom: 1px solid black;
+}
+
 #desc {
 	padding: 5px 5px 5px 5px;
 	position: absolute;

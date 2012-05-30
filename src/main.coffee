@@ -13,9 +13,13 @@ refreshItems = () ->
   $("#item-list").html("" + (i.getRepr() for i in character.items).join(""))
 
   dropEvent = (event, ui) ->
-    $(this).children("ul").append($(ui.draggable).css('left', '').css('top', ''))
+    $(this).children("ul").prepend($(ui.draggable).css('left', '').css('top', ''))
+
+  dropNotPlasmid = (event, ui) ->
+    $(this).after($(ui.draggable).css('left', '').css('top', ''))
 
   $(".not-plasmid").draggable()
+  $(".not-plasmid").droppable(drop: dropNotPlasmid, greedy: true, hoverClass: "not-plasmid-hover")
   $(".plasmid").droppable(drop: dropEvent, hoverClass: "plasmid-hover")
   $("#container-left").droppable(drop: dropEvent, hoverClass: "plasmid-hover")
 
