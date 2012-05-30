@@ -60,7 +60,8 @@ class Character extends Fathom.Entity
     ["renderable", "updateable", "character"]
 
   shoot: () ->
-    new Bullet(@x, @y, @direction)
+    if Fathom.Tick.ticks % 4 == 0
+      new Bullet(@x, @y, @direction)
 
   update: () ->
     if U.movementVector().nonzero()
@@ -95,6 +96,7 @@ class InventoryItem
 class GroundItem extends Fathom.Entity
   constructor: (@x, @y, @type=U.randElem(["1", "2", "3"])) ->
     @description = "This is a longer description. Go go go."
+    @color = U.randElem(["#0ff","#0f0","#00f","#fff"])
     super x, y, 20, 20, "#0aa"
   depth: -> 15
   groups: -> ["renderable", "updateable", "item"]
@@ -167,6 +169,34 @@ character.pickupItem(new GroundItem(0, 0, "Plasmid"))
 character.pickupItem(new GroundItem(0, 0, "Plasmid"))
 character.pickupItem(new GroundItem(0, 0, "Plasmid"))
 
+messages = ["Welcome to my cool e25b game!",
+"Press the arrow keys to move around.",
+"The world is full of monsters that you can genetically engineer molecules to fight against!",
+"If you click on a monster, you can get some sense as to its weakness."
+"Pick up items and drag them onto plasmids on the right toolbar, and then click Build to make a molecule.",
+"Shoot the molecules you've made with X."]
+
+$ ->
+  refreshItems()
+
+  $("#main").click (e) ->
+    items = Fathom.mousePick(e.pageX, e.pageY)
+    if items.length > 0
+      $("#desc").html("You clicked on #{items[0]}.")
+    else
+      $("#desc").html("")
+
+  $("#message-done").click (e) ->
+    messages.shift()
+
+  $("#hide-help").click (e) ->
+    $("#help").toggle()
+
 gameLoop = (context) ->
+  if messages.length
+    $("#message-content").html(messages[0])
+    $("#message").show()
+  else
+    $("#message").hide()
 
 Fathom.initialize gameLoop, "main"
